@@ -57,12 +57,12 @@ def send_message(service, user_id, message):
   except: # errors.HttpError, error:
     print('An error occurred: %s' % error)
 
-def create_message(sender, to, subject, message_text, ccs=(), alist=()):
+def create_message(sender, tos, subject, message_text, ccs=(), alist=()):
     """Create a message for an email.
 
     Args:
       sender: Email address of the sender.
-      to: Email address of the receiver.
+      tos: List of recipient emails
       subject: The subject of the email message.
       message_text: The text of the email message.
       alist: List of strings with attachment file pathnames.
@@ -77,7 +77,7 @@ def create_message(sender, to, subject, message_text, ccs=(), alist=()):
         message = MIMEMultipart()
         message.attach(inner)
 
-    message['to'] = to
+    message['to'] = ', '.join(tos)
     message['from'] = sender
     message['subject'] = subject
     if ccs:
@@ -185,7 +185,7 @@ As of January 2024, here is what you do:
         return info
 
 
-def main(toAdd, subject, attach=(), bodyfile=None, cc=(), loud=True):
+def main(tos, subject, attach=(), bodyfile=None, cc=(), loud=True):
     txtsrc = open(bodyfile, 'r') if (bodyfile is not None) else sys.stdin
 
     try:
@@ -216,7 +216,7 @@ def main(toAdd, subject, attach=(), bodyfile=None, cc=(), loud=True):
     if loud: print("Creating MIME message...")
     msg = create_message(
         sender=fromAdd,
-        to=toAdd,
+        tos=tos,
         subject=subject,
         message_text=txt,
         ccs=cc,
@@ -228,23 +228,28 @@ def main(toAdd, subject, attach=(), bodyfile=None, cc=(), loud=True):
 
     if loud:
         mlen = len(msg['raw'])
-        print(f"Success! Sent {mlen} bytes to {toAdd}")
+        print(f"Success! Sent {mlen} bytes to {tos}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--cc', action='append',
             help="CC recipient (may be specified multiple times)")
+    parser.add_argument('-t', '--to', action='append',
+            help="Additional TO recipient (may be specified multiple times)")
     parser.add_argument('-a', '--attach', action='append', default=[],
             help="attachment (may be specified multiple times)")
     parser.add_argument('-b', '--body', default=None,
             help="filename containing the body of the message (by default, read from standard in)")
     parser.add_argument('-q', '--quiet', action='store_true',
             help="don't print any info to say what is happening")
-    parser.add_argument('to', help='the email address of the recipient')
+    parser.add_argument('recipient', help='the email address of the recipient')
     parser.add_argument('subject', nargs='+', help="subject line")
     args = parser.parse_args()
+    tos = [args.recipient]
+    if args.to:
+        tos.extend(args.to)
     main(
-        toAdd = args.to,
+        tos = tos,
         subject = ' '.join(args.subject),
         attach = args.attach,
         bodyfile = args.body,
