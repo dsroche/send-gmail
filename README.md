@@ -11,9 +11,12 @@ Send email on the command line via gmail
 
 You need a recent version of Python and two pip packages.
 
-To install using pip:
+Running
+    ./setup.sh
 
-    python3 -m pip install google-api-python-client google-auth-oauthlib
+will install a virtual environment (venv) with the necessary packages,
+and create a launcher script `send-gmail` which can be moved
+and run from anywhere on this machine.
 
 ## Gmail requirements
 
