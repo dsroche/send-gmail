@@ -33,7 +33,8 @@ except ImportError:
     print("  python3 -m pip install google-api-python-client google-auth-oauthlib")
     exit(1)
 
-SCOPES=['https://www.googleapis.com/auth/gmail.send']
+SCOPES=['https://www.googleapis.com/auth/gmail.send',
+        'https://www.googleapis.com/auth/gmail.metadata']
 
 scriptdir = os.path.dirname(os.path.realpath(__file__))
 
@@ -57,7 +58,7 @@ def send_message(service, user_id, message):
   except: # errors.HttpError, error:
     print('An error occurred: %s' % error)
 
-def create_message(sender, tos, subject, message_text, ccs=(), alist=()):
+def create_message(sender, tos, subject, message_text, ccs=(), alist=(), reply=None):
     """Create a message for an email.
 
     Args:
@@ -82,6 +83,9 @@ def create_message(sender, tos, subject, message_text, ccs=(), alist=()):
     message['subject'] = subject
     if ccs:
         message['cc'] = ', '.join(ccs)
+    if reply:
+        message['In-Reply-To'] = reply
+        message['References'] = reply
 
     for fname in alist:
         content_type, encoding = mimetypes.guess_type(fname)
@@ -183,7 +187,7 @@ As of August 2025, here is what you do:
         return info
 
 
-def main(tos, subject, attach=(), bodyfile=None, cc=(), loud=True):
+def main(tos, subject, attach=(), bodyfile=None, cc=(), reply=None, loud=True):
     txtsrc = open(bodyfile, 'r') if (bodyfile is not None) else sys.stdin
 
     try:
@@ -219,10 +223,21 @@ def main(tos, subject, attach=(), bodyfile=None, cc=(), loud=True):
         message_text=txt,
         ccs=cc,
         alist=attach,
+        reply=reply,
     )
 
     if loud: print("Sending message to gmail...")
-    send_message(service, 'me', msg)
+    sent = send_message(service, 'me', msg)
+    metadata = service.users().messages().get(userId='me', id=sent['id'], format='metadata').execute()
+    try:
+        msgid = [x for x in metadata['payload']['headers'] if x['name'] == 'Message-Id'][0]['value']
+    except:
+        pass
+    else:
+        if loud:
+            print(f"Message-ID is: {msgid}")
+        else:
+            print(msgid)
 
     if loud:
         mlen = len(msg['raw'])
@@ -238,6 +253,8 @@ if __name__ == '__main__':
             help="attachment (may be specified multiple times)")
     parser.add_argument('-b', '--body', default=None,
             help="filename containing the body of the message (by default, read from standard in)")
+    parser.add_argument('-r', '--reply',
+            help="Send this message in-reply-to the given Message-ID")
     parser.add_argument('-q', '--quiet', action='store_true',
             help="don't print any info to say what is happening")
     parser.add_argument('recipient', help='the email address of the recipient')
@@ -253,4 +270,5 @@ if __name__ == '__main__':
         bodyfile = args.body,
         cc = args.cc,
         loud = not args.quiet,
+        reply = args.reply,
     )
