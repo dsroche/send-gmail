@@ -159,12 +159,13 @@ def get_config():
 First, you need to create an OAuth2 credential from Google
 and download the JSON.
 
-As of August 2025, here is what you do:
+As of August 2026, here is what you do:
 (1) Go to the GMail API page https://console.cloud.google.com/apis/library/gmail.googleapis.com
     Log in and enable this API.
     (Note, for USNA, you might need to put in an ITSD help ticket to enable Google cloud access.)
 (2) Go to APIs/Credentials https://console.cloud.google.com/apis/credentials
-    Go to Clients / Create client, and select Desktop App. Pick any name you like.
+    Click the "+ Create credentials" button at the top and go to OAuth client ID
+    Select Desktop app as the application type and give it any name you like.
     Once created, click "download JSON" and save the file to a safe place
     I recommend saving to {defcredfile}
 """)

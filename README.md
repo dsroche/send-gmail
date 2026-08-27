@@ -27,8 +27,8 @@ to the local account for future invocations.
 The program itself tells you want you need to do if you try to send a
 simple test message like:
 
-    ./send-gmail.py -b <(echo message body) 'YOUREMAIL@DOMAIN.COM' 'Test Subject'
+    ./send-gmail -b <(echo test message body) 'YOUREMAIL@DOMAIN.COM' 'Test Subject'
 
 ## Usage
 
-Run `./send-gmail.py -h`
+Run `./send-gmail -h`
